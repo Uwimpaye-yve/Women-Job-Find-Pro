@@ -8,6 +8,8 @@ Women Job Finder is a web application designed to connect women graduates with j
 **Application Form:** Allow users to submit applications for job opportunities.
 **Public API Integration:** Fetch real job data using the JSearch API from RapidAPI.
 
+# Demo Video link : https://youtu.be/mJnc86JRwJA
+
 # Technologies Used
 
 **Frontend:** HTML, CSS, JavaScript
