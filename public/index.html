@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Women Graduate TalentTracker</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #3498db;
+            --background-color: #f4f4f4;
+            --text-color: #3498db;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .search-section {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .search-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 2px solid var(--primary-color);
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .search-btn {
+            padding: 10px 20px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background-color: #27ae60;
+        }
+
+        #job-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .job-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .job-card:hover {
+            transform: scale(1.02);
+        }
+
+        .job-title {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .job-details {
+            margin-bottom: 15px;
+        }
+
+        .apply-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .apply-btn:hover {
+            background-color: #2980b9;
+        }
+
+        #loading {
+            text-align: center;
+            display: none;
+            color: var(--primary-color);
+        }
+
+        #error-message {
+            color: red;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .search-section {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Women TalentTracker</h1>
+            <p>Find your dream job with ease</p>
+        </header>
+
+        <section class="search-section">
+            <input type="text" id="job-search" class="search-input" placeholder="Enter job title, keywords, or company">
+            <input type="text" id="location-search" class="search-input" placeholder="Location (optional)">
+            <button id="search-btn" class="search-btn">Search Jobs</button>
+        </section>
+
+        <div id="loading">Loading job results...</div>
+        <div id="error-message"></div>
+        <div id="job-results"></div>
+    </div>
+
+    <script>
+        const API_KEY = '0996454f8a84f5ed04423a0aab1cbdc807b9f237';
+        const API_HOST = 'https://findwork.dev/api/jobs/';
+
+        const jobSearchInput = document.getElementById('job-search');
+        const locationSearchInput = document.getElementById('location-search');
+        const searchBtn = document.getElementById('search-btn');
+        const jobResults = document.getElementById('job-results');
+        const loadingIndicator = document.getElementById('loading');
+        const errorMessage = document.getElementById('error-message');
+
+        searchBtn.addEventListener('click', searchJobs);
+
+        async function searchJobs() {
+            const query = jobSearchInput.value.trim();
+            const location = locationSearchInput.value.trim();
+
+            if (!query) {
+                errorMessage.textContent = 'Please enter a job title or keyword';
+                return;
+            }
+
+            try {
+                loadingIndicator.style.display = 'block';
+                jobResults.innerHTML = '';
+                errorMessage.textContent = '';
+
+                const response = await fetch('/api/jobs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query, location })
+                });
+
+                // Log the full response for debugging
+                console.log('Response Status:', response.status);
+                
+                const responseBody = await response.json();
+                console.log('Response Body:', responseBody);
+
+                if (!response.ok) {
+                    throw new Error(responseBody.error || 'Failed to fetch job results');
+                }
+
+                if (responseBody.results && responseBody.results.length > 0) {
+                    displayJobs(responseBody.results);
+                } else {
+                    errorMessage.textContent = 'No jobs found. Try different keywords.';
+                }
+            } catch (error) {
+                console.error('Detailed Error:', error);
+                errorMessage.textContent = `Unable to fetch jobs: ${error.message}`;
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+
+        function displayJobs(jobs) {
+            jobs.forEach(job => {
+                const jobCard = document.createElement('div');
+                jobCard.classList.add('job-card');
+                
+                jobCard.innerHTML = `
+                    <h3 class="job-title">${job.role || 'Untitled Position'}</h3>
+                    <div class="job-details">
+                        <p><strong>Company:</strong> ${job.company || 'Not Specified'}</p>
+                        <p><strong>Location:</strong> ${job.location || 'Not Specified'}</p>
+                        <p><strong>Posted:</strong> ${new Date(job.post_date).toLocaleDateString()}</p>
+                    </div>
+                    <a href="${job.url || '#'}" target="_blank" class="apply-btn">
+                        ${job.url ? 'Apply Now' : 'Details Unavailable'}
+                    </a>
+                `;
+
+                jobResults.appendChild(jobCard);
+            });
+        }
+
+        // Add keyboard support for search
+        [jobSearchInput, locationSearchInput].forEach(input => {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    searchJobs();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
